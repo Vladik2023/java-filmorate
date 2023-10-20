@@ -1,16 +1,16 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
+@ToString
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor

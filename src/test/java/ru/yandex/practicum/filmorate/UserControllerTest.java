@@ -13,11 +13,8 @@ import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ValidationException;
 import javax.validation.Validator;
 import java.util.Collections;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
