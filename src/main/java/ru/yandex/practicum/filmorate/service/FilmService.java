@@ -23,7 +23,7 @@ public class FilmService {
                 .orElse(null);
 
         if (filmToUpdate != null) {
-            filmToUpdate= filmToUpdate.toBuilder()
+            filmToUpdate = filmToUpdate.toBuilder()
                     .name(updatedFilm.getName())
                     .description(updatedFilm.getDescription())
                     .releaseDate(updatedFilm.getReleaseDate())
