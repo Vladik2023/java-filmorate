@@ -27,7 +27,6 @@ public class FilmController {
     private final FilmService filmService;
     private final Validator validator;
 
-
     @PostMapping
     public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
