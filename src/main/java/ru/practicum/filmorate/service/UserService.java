@@ -10,10 +10,16 @@ import java.util.List;
 public class UserService {
 
     private List<User> users = new ArrayList<>();
+    private int counter;
 
     public User createUser(User user) {
+        user.setId(generateId());
         users.add(user);
         return user;
+    }
+
+    private int generateId(){
+        return ++counter;
     }
 
     public User updateUser(int id, User updatedUser) {
