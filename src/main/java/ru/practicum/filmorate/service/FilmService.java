@@ -10,11 +10,17 @@ import java.util.List;
 public class FilmService {
 
     private List<Film> films = new ArrayList<>();
-
+    private int counter;
     public Film addFilm(Film film) {
+        film.setId(generateId());
         films.add(film);
         return film;
     }
+
+    private int generateId() {
+        return ++counter;
+    }
+
 
     public Film updateFilm(int id, Film updatedFilm) {
         Film filmToUpdate = films.stream()
