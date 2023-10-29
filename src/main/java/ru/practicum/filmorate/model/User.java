@@ -24,7 +24,7 @@ public class User {
     @Pattern(regexp = "\\S+", message = "Логин не может содержать пробелы")
     private String login;
 
-    private String displayName;
+    private String name;
 
     @Past(message = "Дата рождения не может быть в будущем")
     @JsonFormat(pattern = "yyyy-MM-dd")
