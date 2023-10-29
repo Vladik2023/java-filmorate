@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
