@@ -50,7 +50,7 @@ public class FilmController {
             throw new ValidationException(errorMessage);
         }
 
-        Film updatedFilm = filmService.updateFilm(film.getId(), film);
+        Film updatedFilm = filmService.updateFilm(film);
         log.info("Film updated: {}", updatedFilm);
         return ResponseEntity.ok(updatedFilm);
     }

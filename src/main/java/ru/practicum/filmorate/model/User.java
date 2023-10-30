@@ -33,4 +33,6 @@ public class User {
     @Past(message = "Дата рождения не может быть в будущем")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
+
+    public static int usersId = 1; // сквозной счетчик
 }

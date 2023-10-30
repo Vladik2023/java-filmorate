@@ -47,7 +47,7 @@ public class UserController {
             throw new ValidationException(errorMessage);
         }
 
-        User updatedUser = userService.updateUser(user.getId(), user);
+        User updatedUser = userService.updateUser(user);
         log.info("User updated: {}", updatedUser);
         return ResponseEntity.ok(updatedUser);
     }
