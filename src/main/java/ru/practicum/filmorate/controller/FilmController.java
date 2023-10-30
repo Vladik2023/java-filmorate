@@ -40,8 +40,8 @@ public class FilmController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFilm);
     }
 
-    @PutMapping()
-    public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Film> updateFilm(@PathVariable int id, @Valid @RequestBody Film film) {
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
         if (!violations.isEmpty()) {
             String errorMessage = violations.iterator().next().getMessage();
@@ -49,7 +49,7 @@ public class FilmController {
             throw new ValidationException(errorMessage);
         }
 
-        Film updatedFilm = filmService.updateFilm(film.getId(), film);
+        Film updatedFilm = filmService.updateFilm(id, film);
         log.info("Film updated: {}", updatedFilm);
         return ResponseEntity.ok(updatedFilm);
     }
