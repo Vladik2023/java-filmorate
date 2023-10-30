@@ -38,8 +38,8 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
-    @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable int id, @Valid @RequestBody User user) {
+    @PutMapping()
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
             String errorMessage = violations.iterator().next().getMessage();
@@ -47,7 +47,7 @@ public class UserController {
             throw new ValidationException(errorMessage);
         }
 
-        User updatedUser = userService.updateUser(id, user);
+        User updatedUser = userService.updateUser(user.getId(), user);
         log.info("User updated: {}", updatedUser);
         return ResponseEntity.ok(updatedUser);
     }
