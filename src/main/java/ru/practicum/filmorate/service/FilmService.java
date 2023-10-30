@@ -4,37 +4,26 @@ import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.model.Film;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FilmService {
 
-    private List<Film> films = new ArrayList<>();
+    private final Map<Integer, Film> films = new HashMap<>();
 
     public Film addFilm(Film film) {
-        films.add(film);
+        films.put(film.getId(), film);
         return film;
     }
 
     public Film updateFilm(int id, Film updatedFilm) {
-        Film filmToUpdate = films.stream()
-                .filter(film -> film.getId() == id)
-                .findFirst()
-                .orElse(null);
-
-        if (filmToUpdate != null) {
-            filmToUpdate = filmToUpdate.toBuilder()
-                    .name(updatedFilm.getName())
-                    .description(updatedFilm.getDescription())
-                    .releaseDate(updatedFilm.getReleaseDate())
-                    .duration(updatedFilm.getDuration())
-                    .build();
-        }
-
-        return filmToUpdate;
+        films.put(id, updatedFilm);
+        return updatedFilm;
     }
 
     public List<Film> getAllFilms() {
-        return films;
+        return new ArrayList<>(films.values());
     }
 }

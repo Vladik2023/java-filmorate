@@ -4,36 +4,26 @@ import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserService {
 
-    private List<User> users = new ArrayList<>();
+    private final Map<Integer, User> users = new HashMap<>();
 
     public User createUser(User user) {
-        users.add(user);
+        users.put(user.getId(), user);
         return user;
     }
 
     public User updateUser(int id, User updatedUser) {
-        User userToUpdate = users.stream()
-                .filter(user -> user.getId() == id)
-                .findFirst()
-                .orElse(null);
-
-        if (userToUpdate != null) {
-            userToUpdate = userToUpdate.toBuilder()
-                    .email(updatedUser.getEmail())
-                    .login(updatedUser.getLogin())
-                    .birthday(updatedUser.getBirthday())
-                    .build();
-        }
-
-        return userToUpdate;
+        users.put(id, updatedUser);
+        return updatedUser;
     }
 
     public List<User> getAllUsers() {
-        return users;
+        return new ArrayList<>(users.values());
     }
 }
