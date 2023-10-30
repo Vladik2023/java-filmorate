@@ -13,14 +13,11 @@ import ru.practicum.filmorate.controller.FilmController;
 import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.service.FilmService;
 
-import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(FilmController.class)
