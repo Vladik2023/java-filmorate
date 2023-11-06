@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.practicum.filmorate.controller.UserController;
 import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.model.User;
-import ru.practicum.filmorate.service.UserService;
+import ru.practicum.filmorate.storage.UserStorage;
 
 import javax.validation.Validator;
 import java.time.LocalDate;
@@ -31,7 +31,7 @@ public class UserControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private UserService userService;
+    private UserStorage userStorage;
 
     @MockBean
     private Validator validator;
@@ -39,7 +39,7 @@ public class UserControllerTest {
     @Test
     public void testCreateUser() throws Exception {
         User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userService.createUser(any(User.class))).thenReturn(user);
+        when(userStorage.createUser(any(User.class))).thenReturn(user);
         when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
 
         mockMvc.perform(MockMvcRequestBuilders.post("/users")
@@ -52,7 +52,7 @@ public class UserControllerTest {
     @Test
     public void testUpdateUser() throws Exception {
         User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userService.updateUser(any(User.class))).thenReturn(user);
+        when(userStorage.updateUser(any(User.class))).thenReturn(user);
         when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
 
         mockMvc.perform(MockMvcRequestBuilders.put("/users")
@@ -65,7 +65,7 @@ public class UserControllerTest {
     @Test
     public void testGetAllUsers() throws Exception {
         User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userService.getAllUsers()).thenReturn(Collections.singletonList(user));
+        when(userStorage.getAllUsers()).thenReturn(Collections.singletonList(user));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/users"))
                 .andExpect(MockMvcResultMatchers.status().isOk())

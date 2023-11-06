@@ -1,59 +1,73 @@
 package ru.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.model.User;
-import ru.practicum.filmorate.utils.Validators;
+import ru.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
-@Slf4j
 public class UserService {
+    private Map<Long, Set<Long>> friendsMap;
+    private UserStorage userStorage;
 
-    private final Map<Integer, User> users = new HashMap<>();
-
-    public User createUser(User user) {
-        validate(user);
-        users.put(user.getId(), user);
-        log.debug("Добавлен новый пользователь: {}", user);
-        return user;
+    public UserService() {
+        friendsMap = new HashMap<>();
     }
 
-    public User updateUser(User user) {
-        if (!users.containsKey(user.getId())) {
-            Validators.logAndError("Ошибка! Невозможно обновить пользователя - его не существует.");
+    public void addFriend(Long userId1, Long userId2) {
+        if (areFriends(userId1, userId2)) {
+            System.out.println("Пользователь " + userId1 + " уже является другом пользователя " + userId2);
+            return;
         }
-        validate(user);
-        users.put(user.getId(), user);
-        log.debug("Обновлен пользователь: {}", user);
-        return user;
+
+        friendsMap.computeIfAbsent(userId1, k -> new HashSet<>()).add(userId2);
+        friendsMap.computeIfAbsent(userId2, k -> new HashSet<>()).add(userId1);
     }
 
-    public List<User> getAllUsers() {
-        return new ArrayList<>(users.values());
-    }
+    public void removeFriend(Long userId1, Long userId2) {
+        Set<Long> user1Friends = friendsMap.get(userId1);
+        Set<Long> user2Friends = friendsMap.get(userId2);
 
-    private void validate(User user) {
-        Validators.validateEmail(user.getEmail());
-        Validators.validateLogin(user.getLogin());
-        validateName(user);
-        Validators.validateBirthday(user.getBirthday());
-        validateId(user);
-    }
+        if (user1Friends != null) {
+            user1Friends.remove(userId2);
+        }
 
-    private void validateId(User user) {
-        if (user.getId() == 0) {
-            user.setId(User.usersId++);
+        if (user2Friends != null) {
+            user2Friends.remove(userId1);
         }
     }
 
-    private void validateName(User user) {
-        if (user.getName() == null || user.getName().isEmpty() || user.getName().isBlank()) {
-            user.setName(user.getLogin());
+    public List<User> getFriends(Long userId) {
+        Set<Long> friendIds = friendsMap.getOrDefault(userId, new HashSet<>());
+        List<User> friends = new ArrayList<>();
+        for (Long friendId : friendIds) {
+            User friend = userStorage.getUserById(friendId);
+            if (friend != null) {
+                friends.add(friend);
+            }
         }
+        return friends;
+    }
+    public List<User> getCommonFriends(Long userId1, Long userId2) {
+        List<User> friends1 = getFriends(userId1);
+        List<User> friends2 = getFriends(userId2);
+
+        List<User> commonFriends = new ArrayList<>();
+        for (User friend1 : friends1) {
+            if (friends2.contains(friend1)) {
+                commonFriends.add(friend1);
+            }
+        }
+
+        return commonFriends;
+    }
+    public User getUserById(Long userId) {
+        return userStorage.getUserById(userId);
+    }
+
+    private boolean areFriends(Long userId1, Long userId2) {
+        Set<Long> user1Friends = friendsMap.get(userId1);
+        return user1Friends != null && user1Friends.contains(userId2);
     }
 }

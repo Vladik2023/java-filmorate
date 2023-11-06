@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.filmorate.exception.ValidationException;
 import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.service.FilmService;
+import ru.practicum.filmorate.storage.FilmStorage;
 
 
 import javax.validation.ConstraintViolation;
@@ -23,8 +24,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FilmController {
 
-    private final FilmService filmService;
+    private final FilmStorage filmStorage;
     private final Validator validator;
+    private final FilmService filmService;
 
     @PostMapping
     public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
@@ -35,7 +37,7 @@ public class FilmController {
             throw new ValidationException(errorMessage);
         }
 
-        Film createdFilm = filmService.addFilm(film);
+        Film createdFilm = filmStorage.addFilm(film);
         log.info("Film added: {}", createdFilm);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFilm);
     }
@@ -50,15 +52,43 @@ public class FilmController {
             throw new ValidationException(errorMessage);
         }
 
-        Film updatedFilm = filmService.updateFilm(film);
+        Film updatedFilm = filmStorage.updateFilm(film);
         log.info("Film updated: {}", updatedFilm);
         return ResponseEntity.ok(updatedFilm);
     }
 
     @GetMapping
     public ResponseEntity<List<Film>> getAllFilms() {
-        List<Film> films = filmService.getAllFilms();
+        List<Film> films = filmStorage.getAllFilms();
         log.info("Retrieved {} films", films.size());
         return ResponseEntity.ok(films);
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<List<Long>> getPopularFilms() {
+        List<Long> popularFilms = filmService.getPopularFilms();
+        return ResponseEntity.ok(popularFilms);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<String> unlikeFilm(@PathVariable int id, @PathVariable Long userId) {
+        Film film = filmStorage.getFilmById(id);
+        if (film == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        filmService.removeLike((long) film.getId(), userId);
+        return ResponseEntity.ok("Лайк с фильма удален успешно");
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<String> likeFilm(@PathVariable int id, @PathVariable long userId) {
+        Film film = filmStorage.getFilmById(id);
+        if (film == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        filmService.addLike((long) film.getId(), userId);
+        return ResponseEntity.ok("Фильм лайкнут успешно");
     }
 }

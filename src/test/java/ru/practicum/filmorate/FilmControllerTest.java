@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.practicum.filmorate.controller.FilmController;
 import ru.practicum.filmorate.model.Film;
-import ru.practicum.filmorate.service.FilmService;
+import ru.practicum.filmorate.storage.FilmStorage;
 
 import javax.validation.Validator;
 import java.time.LocalDate;
@@ -30,7 +30,7 @@ public class FilmControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private FilmService filmService;
+    private FilmStorage filmStorage;
 
     @MockBean
     private Validator validator;
@@ -38,7 +38,7 @@ public class FilmControllerTest {
     @Test
     public void testAddFilm() throws Exception {
         Film film = new Film(1, "Test Film", "Test Description", LocalDate.now(), 120);
-        when(filmService.addFilm(any(Film.class))).thenReturn(film);
+        when(filmStorage.addFilm(any(Film.class))).thenReturn(film);
         when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
 
         mockMvc.perform(MockMvcRequestBuilders.post("/films")
@@ -51,7 +51,7 @@ public class FilmControllerTest {
     @Test
     public void testUpdateFilm() throws Exception {
         Film film = new Film(1, "Test Film", "Test Description", LocalDate.now(), 120);
-        when(filmService.updateFilm(any(Film.class))).thenReturn(film);
+        when(filmStorage.updateFilm(any(Film.class))).thenReturn(film);
         when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
 
         mockMvc.perform(MockMvcRequestBuilders.put("/films")
@@ -64,7 +64,7 @@ public class FilmControllerTest {
     @Test
     public void testGetAllFilms() throws Exception {
         Film film = new Film(1, "Test Film", "Test Description", LocalDate.now(), 120);
-        when(filmService.getAllFilms()).thenReturn(Collections.singletonList(film));
+        when(filmStorage.getAllFilms()).thenReturn(Collections.singletonList(film));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/films"))
                 .andExpect(MockMvcResultMatchers.status().isOk())

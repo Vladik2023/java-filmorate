@@ -1,53 +1,57 @@
 package ru.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.filmorate.model.Film;
-import ru.practicum.filmorate.utils.Validators;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
-@Slf4j
 public class FilmService {
+    private Map<Long, Set<Long>> likesMap;
+    private Map<Long, Integer> likesCountMap;
 
-    private final Map<Integer, Film> films = new HashMap<>();
-
-    public Film addFilm(Film film) {
-        validate(film);
-        films.put(film.getId(), film);
-        log.debug("Добавлен новый фильм: {}", film);
-        return film;
+    public FilmService() {
+        likesMap = new HashMap<>();
+        likesCountMap = new HashMap<>();
     }
 
-    public Film updateFilm(Film film) {
-        if (!films.containsKey(film.getId())) {
-            Validators.logAndError("Ошибка! Невозможно обновить фильм - его не существует.");
+    public void addLike(Long filmId, Long userId) {
+        if (!likesMap.containsKey(filmId)) {
+            likesMap.put(filmId, new HashSet<>());
         }
-        validate(film);
-        films.put(film.getId(), film);
-        log.debug("Обновлен фильм: {}", film);
-        return film;
-    }
 
-    public List<Film> getAllFilms() {
-        return new ArrayList<>(films.values());
-    }
-
-    private void validate(Film film) {
-        Validators.validateName(film.getName());
-        Validators.validateDescription(film.getDescription());
-        Validators.validateReleaseDate(film.getReleaseDate());
-        Validators.validateDuration(film.getDuration());
-        validateId(film);
-    }
-
-    private void validateId(Film film) {
-        if (film.getId() == 0) {
-            film.setId(Film.filmsId++);
+        Set<Long> likes = likesMap.get(filmId);
+        if (!likes.contains(userId)) {
+            likes.add(userId);
+            likesCountMap.put(filmId, likes.size());
         }
     }
+
+    public void removeLike(Long filmId, Long userId) {
+        if (likesMap.containsKey(filmId)) {
+            Set<Long> likes = likesMap.get(filmId);
+            if (likes.contains(userId)) {
+                likes.remove(userId);
+                likesCountMap.put(filmId, likes.size());
+            }
+        }
+    }
+
+    public List<Long> getPopularFilms() {
+        List<Map.Entry<Long, Integer>> sortedLikesCountList = new ArrayList<>(likesCountMap.entrySet());
+        sortedLikesCountList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
+
+        List<Long> popularFilms = new ArrayList<>();
+        int count = 0;
+        for (Map.Entry<Long, Integer> entry : sortedLikesCountList) {
+            popularFilms.add(entry.getKey());
+            count++;
+            if (count >= 10) {
+                break;
+            }
+        }
+
+        return popularFilms;
+    }
+
+
 }
