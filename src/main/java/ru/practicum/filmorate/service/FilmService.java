@@ -52,6 +52,4 @@ public class FilmService {
 
         return popularFilms;
     }
-
-
 }

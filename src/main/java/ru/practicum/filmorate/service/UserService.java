@@ -10,7 +10,6 @@ import java.util.*;
 public class UserService {
     private Map<Long, Set<Long>> friendsMap;
     private UserStorage userStorage;
-
     public UserService() {
         friendsMap = new HashMap<>();
     }
@@ -49,19 +48,19 @@ public class UserService {
         }
         return friends;
     }
+
     public List<User> getCommonFriends(Long userId1, Long userId2) {
         List<User> friends1 = getFriends(userId1);
         List<User> friends2 = getFriends(userId2);
-
         List<User> commonFriends = new ArrayList<>();
         for (User friend1 : friends1) {
             if (friends2.contains(friend1)) {
                 commonFriends.add(friend1);
             }
         }
-
         return commonFriends;
     }
+
     public User getUserById(Long userId) {
         return userStorage.getUserById(userId);
     }
