@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
@@ -50,6 +49,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             film.setId(Film.filmsId++);
         }
     }
+
     public Film getFilmById(int id) {
         for (Film film : films.values()) {
             if (film.getId() == id) {
