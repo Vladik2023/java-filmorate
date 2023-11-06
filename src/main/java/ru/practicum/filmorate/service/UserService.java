@@ -10,6 +10,7 @@ import java.util.*;
 public class UserService {
     private Map<Long, Set<Long>> friendsMap;
     private UserStorage userStorage;
+
     public UserService() {
         friendsMap = new HashMap<>();
     }
