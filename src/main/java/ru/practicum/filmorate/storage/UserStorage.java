@@ -10,6 +10,7 @@ public interface UserStorage {
     User updateUser(User user);
 
     List<User> getAllUsers();
+
     User getUserById(long userId);
 
     void validate(User user);
