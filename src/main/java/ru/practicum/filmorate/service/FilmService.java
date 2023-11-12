@@ -21,16 +21,17 @@ public class FilmService {
         return validator.validate(film);
     }
 
-    public Film addFilm(Film film){
+    public Film addFilm(Film film) {
         filmStorage.addFilm(film);
         return film;
     }
 
-    public Film updateFilm(Film film){
+    public Film updateFilm(Film film) {
         filmStorage.updateFilm(film);
         return film;
     }
-    public List<Film> getAllFilms(){
+
+    public List<Film> getAllFilms() {
         return filmStorage.getAllFilms();
     }
 
@@ -38,6 +39,7 @@ public class FilmService {
         filmStorage.getFilmById(id);
         return filmStorage.getFilmById(id);
     }
+
     public void addLike(Long filmId, Long userId) {
         if (!likesMap.containsKey(filmId)) {
             likesMap.put(filmId, new HashSet<>());
