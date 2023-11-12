@@ -30,7 +30,7 @@ public class UserService {
         return userStorage.updateUser(user);
     }
 
-    public List<User> getAllUsers(){
+    public List<User> getAllUsers() {
         return userStorage.getAllUsers();
     }
 
