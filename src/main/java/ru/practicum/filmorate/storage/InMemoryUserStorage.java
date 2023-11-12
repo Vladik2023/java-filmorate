@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.practicum.filmorate.model.User;
 import ru.practicum.filmorate.utils.Validators;
 
+import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Integer, User> users = new HashMap<>();
 
+
     public User createUser(User user) {
         validate(user);
         users.put(user.getId(), user);
@@ -25,7 +27,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     public User updateUser(User user) {
         if (!users.containsKey(user.getId())) {
-            Validators.logAndError("Ошибка! Невозможно обновить пользователя - его не существует.");
+            throw new ValidationException("Ошибка! Невозможно обновить пользователя - его не существует.");
         }
         validate(user);
         users.put(user.getId(), user);

@@ -1,74 +1,148 @@
 package ru.practicum.filmorate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import ru.practicum.filmorate.controller.UserController;
-import ru.practicum.filmorate.model.Film;
+import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.User;
-import ru.practicum.filmorate.storage.UserStorage;
+import ru.practicum.filmorate.service.UserService;
 
-import javax.validation.Validator;
-import java.time.LocalDate;
+import javax.validation.ConstraintViolation;
+import javax.validation.ValidationException;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(UserController.class)
-public class UserControllerTest {
+@ExtendWith(MockitoExtension.class)
+class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private UserService userService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private UserStorage userStorage;
-
-    @MockBean
-    private Validator validator;
+    @InjectMocks
+    private UserController userController;
 
     @Test
-    public void testCreateUser() throws Exception {
-        User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userStorage.createUser(any(User.class))).thenReturn(user);
-        when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
+    void testCreateUser() {
+        User user = new User();
+        when(userService.validateUser(user)).thenReturn(Collections.emptySet());
+        when(userService.createUser(user)).thenReturn(user);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(user.getName()));
+        ResponseEntity<User> response = userController.createUser(user);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(user, response.getBody());
+        verify(userService).createUser(user);
     }
 
     @Test
-    public void testUpdateUser() throws Exception {
-        User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userStorage.updateUser(any(User.class))).thenReturn(user);
-        when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
+    void testCreateUserWithValidationErrors() {
+        User user = new User();
+        Set<ConstraintViolation<User>> violations = Collections.singleton(mock(ConstraintViolation.class));
+        when(userService.validateUser(user)).thenReturn(violations);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(user.getName()));
+        assertThrows(ValidationException.class, () -> userController.createUser(user));
+        verify(userService, never()).createUser(user);
     }
 
     @Test
-    public void testGetAllUsers() throws Exception {
-        User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userStorage.getAllUsers()).thenReturn(Collections.singletonList(user));
+    void testUpdateUser() {
+        User user = new User();
+        when(userService.validateUser(user)).thenReturn(Collections.emptySet());
+        when(userService.updateUser(user)).thenReturn(user);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/users"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].name").value(user.getName()));
+        ResponseEntity<User> response = userController.updateUser(user);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(user, response.getBody());
+        verify(userService).updateUser(user);
+    }
+
+    @Test
+    void testUpdateUserWithValidationErrors() {
+        User user = new User();
+        Set<ConstraintViolation<User>> violations = Collections.singleton(mock(ConstraintViolation.class));
+        when(userService.validateUser(user)).thenReturn(violations);
+
+        assertThrows(ValidationException.class, () -> userController.updateUser(user));
+        verify(userService, never()).updateUser(user);
+    }
+
+    @Test
+    void testGetAllUsers() {
+        List<User> users = Collections.singletonList(new User());
+        when(userService.getAllUsers()).thenReturn(users);
+
+        ResponseEntity<List<User>> response = userController.getAllUsers();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(users, response.getBody());
+        verify(userService).getAllUsers();
+    }
+
+    @Test
+    void testGetUserById() {
+        User user = new User();
+        when(userService.getUserById(1L)).thenReturn(user);
+
+        ResponseEntity<User> response = userController.getUserById(1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(user, response.getBody());
+        verify(userService).getUserById(1L);
+    }
+
+    @Test
+    void testGetUserByIdNotFound() {
+        when(userService.getUserById(1L)).thenReturn(null);
+
+        assertThrows(NotFoundException.class, () -> userController.getUserById(1L));
+        verify(userService).getUserById(1L);
+    }
+
+    @Test
+    void testAddFriend() {
+        userController.addFriend(1L, 2L);
+
+        verify(userService).addFriend(1L, 2L);
+    }
+
+    @Test
+    void testRemoveFriend() {
+        userController.removeFriend(1L, 2L);
+
+        verify(userService).removeFriend(1L, 2L);
+    }
+
+    @Test
+    void testGetFriends() {
+        List<User> friends = Collections.singletonList(new User());
+        when(userService.getFriends(1L)).thenReturn(friends);
+
+        ResponseEntity<List<User>> response = userController.getFriends(1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(friends, response.getBody());
+        verify(userService).getFriends(1L);
+    }
+
+    @Test
+    void testGetCommonFriends() {
+        List<User> commonFriends = Collections.singletonList(new User());
+        when(userService.getCommonFriends(1L, 2L)).thenReturn(commonFriends);
+
+        ResponseEntity<List<User>> response = userController.getCommonFriends(1L, 2L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(commonFriends, response.getBody());
+        verify(userService).getCommonFriends(1L, 2L);
     }
 }

@@ -1,5 +1,4 @@
 package ru.practicum.filmorate.controller;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -9,11 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.filmorate.exception.ValidationException;
 import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.service.FilmService;
-import ru.practicum.filmorate.storage.FilmStorage;
-
 
 import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Set;
@@ -24,43 +20,36 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FilmController {
 
-    private final FilmStorage filmStorage;
-    private final Validator validator;
     private final FilmService filmService;
 
     @PostMapping
     public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
-        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        Set<ConstraintViolation<Film>> violations = filmService.validateFilm(film);
         if (!violations.isEmpty()) {
             String errorMessage = violations.iterator().next().getMessage();
-            log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
-        Film createdFilm = filmStorage.addFilm(film);
-        log.info("Film added: {}", createdFilm);
+        Film createdFilm = filmService.addFilm(film);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFilm);
     }
 
     @PutMapping
     @Validated
     public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
-        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        Set<ConstraintViolation<Film>> violations = filmService.validateFilm(film);
         if (!violations.isEmpty()) {
             String errorMessage = violations.iterator().next().getMessage();
-            log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
-        Film updatedFilm = filmStorage.updateFilm(film);
-        log.info("Film updated: {}", updatedFilm);
+        Film updatedFilm = filmService.updateFilm(film);
         return ResponseEntity.ok(updatedFilm);
     }
 
     @GetMapping
     public ResponseEntity<List<Film>> getAllFilms() {
-        List<Film> films = filmStorage.getAllFilms();
-        log.info("Retrieved {} films", films.size());
+        List<Film> films = filmService.getAllFilms();
         return ResponseEntity.ok(films);
     }
 
@@ -72,7 +61,7 @@ public class FilmController {
 
     @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<String> unlikeFilm(@PathVariable int id, @PathVariable Long userId) {
-        Film film = filmStorage.getFilmById(id);
+        Film film = filmService.getFilmById(id);
         if (film == null) {
             return ResponseEntity.notFound().build();
         }
@@ -83,7 +72,7 @@ public class FilmController {
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<String> likeFilm(@PathVariable int id, @PathVariable long userId) {
-        Film film = filmStorage.getFilmById(id);
+        Film film = filmService.getFilmById(id);
         if (film == null) {
             return ResponseEntity.notFound().build();
         }

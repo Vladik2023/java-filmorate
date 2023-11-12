@@ -1,19 +1,43 @@
 package ru.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.filmorate.model.Film;
+import ru.practicum.filmorate.storage.FilmStorage;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private Map<Long, Set<Long>> likesMap;
     private Map<Long, Integer> likesCountMap;
+    private FilmStorage filmStorage;
+    private Validator validator;
 
-    public FilmService() {
-        likesMap = new HashMap<>();
-        likesCountMap = new HashMap<>();
+    public Set<ConstraintViolation<Film>> validateFilm(Film film) {
+        return validator.validate(film);
     }
 
+    public Film addFilm(Film film){
+        filmStorage.addFilm(film);
+        return film;
+    }
+
+    public Film updateFilm(Film film){
+        filmStorage.updateFilm(film);
+        return film;
+    }
+    public List<Film> getAllFilms(){
+        return filmStorage.getAllFilms();
+    }
+
+    public Film getFilmById(int id) {
+        filmStorage.getFilmById(id);
+        return filmStorage.getFilmById(id);
+    }
     public void addLike(Long filmId, Long userId) {
         if (!likesMap.containsKey(filmId)) {
             likesMap.put(filmId, new HashSet<>());

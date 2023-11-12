@@ -2,18 +2,17 @@ package ru.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.User;
 import ru.practicum.filmorate.service.UserService;
-import ru.practicum.filmorate.storage.UserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
 import javax.validation.ValidationException;
-import javax.validation.Validator;
 import java.util.List;
 import java.util.Set;
 
@@ -21,43 +20,42 @@ import java.util.Set;
 @RequestMapping("/users")
 @Slf4j
 @RequiredArgsConstructor
+@ComponentScan
 public class UserController {
 
-    private final UserStorage userStorage;
     private final UserService userService;
-    private final Validator validator;
 
     @PostMapping
     public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<User>> violations = userService.validateUser(user);
         if (!violations.isEmpty()) {
             String errorMessage = violations.iterator().next().getMessage();
             log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
-        User createdUser = userStorage.createUser(user);
+        User createdUser = userService.createUser(user);
         log.info("User created: {}", createdUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
     @PutMapping
     public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+        Set<ConstraintViolation<User>> violations = userService.validateUser(user);
         if (!violations.isEmpty()) {
             String errorMessage = violations.iterator().next().getMessage();
             log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
-        User updatedUser = userStorage.updateUser(user);
+        User updatedUser = userService.updateUser(user);
         log.info("User updated: {}", updatedUser);
         return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userStorage.getAllUsers();
+        List<User> users = userService.getAllUsers();
         log.info("Retrieved {} users", users.size());
         return ResponseEntity.ok(users);
     }

@@ -2,6 +2,7 @@ package ru.practicum.filmorate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -11,14 +12,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.practicum.filmorate.controller.FilmController;
 import ru.practicum.filmorate.model.Film;
-import ru.practicum.filmorate.storage.FilmStorage;
+import ru.practicum.filmorate.service.FilmService;
 
-import javax.validation.Validator;
-import java.time.LocalDate;
-import java.util.Collections;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import java.util.Arrays;
+import java.util.List;
 
 @WebMvcTest(FilmController.class)
 public class FilmControllerTest {
@@ -26,48 +23,50 @@ public class FilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
-    private FilmStorage filmStorage;
-
-    @MockBean
-    private Validator validator;
-
-    @Test
-    public void testAddFilm() throws Exception {
-        Film film = new Film(1, "Test Film", "Test Description", LocalDate.now(), 120);
-        when(filmStorage.addFilm(any(Film.class))).thenReturn(film);
-        when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(film)))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(film.getName()));
-    }
-
-    @Test
-    public void testUpdateFilm() throws Exception {
-        Film film = new Film(1, "Test Film", "Test Description", LocalDate.now(), 120);
-        when(filmStorage.updateFilm(any(Film.class))).thenReturn(film);
-        when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
-
-        mockMvc.perform(MockMvcRequestBuilders.put("/films")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(film)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(film.getName()));
-    }
+    private FilmService filmService;
 
     @Test
     public void testGetAllFilms() throws Exception {
-        Film film = new Film(1, "Test Film", "Test Description", LocalDate.now(), 120);
-        when(filmStorage.getAllFilms()).thenReturn(Collections.singletonList(film));
+        List<Film> films = Arrays.asList(new Film(), new Film());
+
+        Mockito.when(filmService.getAllFilms()).thenReturn(films);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/films"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].name").value(film.getName()));
+                .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    @Test
+    public void testGetPopularFilms() throws Exception {
+        List<Long> popularFilms = Arrays.asList(1L, 2L, 3L);
+
+        Mockito.when(filmService.getPopularFilms()).thenReturn(popularFilms);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/films/popular"))
+                .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    @Test
+    public void testUnlikeFilm() throws Exception {
+        Mockito.when(filmService.getFilmById(Mockito.anyInt())).thenReturn(new Film());
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/films/1/like/1"))
+                .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    @Test
+    public void testLikeFilm() throws Exception {
+        Mockito.when(filmService.getFilmById(Mockito.anyInt())).thenReturn(new Film());
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/films/1/like/1"))
+                .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    private String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

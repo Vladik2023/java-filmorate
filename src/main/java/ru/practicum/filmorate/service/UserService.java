@@ -1,18 +1,37 @@
 package ru.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.model.User;
 import ru.practicum.filmorate.storage.UserStorage;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private Map<Long, Set<Long>> friendsMap;
+    @Autowired
     private UserStorage userStorage;
+    public Validator validator;
 
-    public UserService() {
-        friendsMap = new HashMap<>();
+    public Set<ConstraintViolation<User>> validateUser(User user) {
+        return validator.validate(user);
+    }
+
+    public User createUser(User user) {
+        return userStorage.createUser(user);
+    }
+
+    public User updateUser(User user) {
+        return userStorage.updateUser(user);
+    }
+
+    public List<User> getAllUsers(){
+        return userStorage.getAllUsers();
     }
 
     public void addFriend(Long userId1, Long userId2) {
