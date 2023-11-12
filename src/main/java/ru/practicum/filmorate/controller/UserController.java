@@ -69,45 +69,26 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<String> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        User user = userService.getUserById(id);
-        User friend = userService.getUserById(friendId);
-        if (user == null || friend == null) {
-            throw new NotFoundException("User or friend not found");
-        }
+    @PutMapping("/users/{id}/friends/{friendId}")
+    public ResponseEntity<Void> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.addFriend(id, friendId);
-        return ResponseEntity.ok("Friend added successfully");
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<String> removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
-        User user = userService.getUserById(id);
-        User friend = userService.getUserById(friendId);
-        if (user == null || friend == null) {
-            throw new NotFoundException("User or friend not found");
-        }
+    @DeleteMapping("/users/{id}/friends/{friendId}")
+    public ResponseEntity<Void> removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.removeFriend(id, friendId);
-        return ResponseEntity.ok("Friend removed successfully");
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{id}/friends")
+    @GetMapping("/users/{id}/friends")
     public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            throw new NotFoundException("User not found");
-        }
         List<User> friends = userService.getFriends(id);
         return ResponseEntity.ok(friends);
     }
 
-    @GetMapping("/{id}/friends/common/{otherId}")
+    @GetMapping("/users/{id}/friends/common/{otherId}")
     public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
-        User user = userService.getUserById(id);
-        User otherUser = userService.getUserById(otherId);
-        if (user == null || otherUser == null) {
-            throw new NotFoundException("User not found");
-        }
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
         return ResponseEntity.ok(commonFriends);
     }
