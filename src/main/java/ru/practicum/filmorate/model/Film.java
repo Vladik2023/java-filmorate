@@ -8,6 +8,8 @@ import javax.validation.constraints.PastOrPresent;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,7 +20,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class Film {
 
-    private int id;
+    private Long id;
 
     @NotBlank(message = "Название не может быть пустым")
     private String name;
@@ -33,5 +35,5 @@ public class Film {
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private int duration;
 
-    public static int filmsId = 1; // сквозной счетчик
+    private Set<Long> likesUser = new HashSet<>();
 }

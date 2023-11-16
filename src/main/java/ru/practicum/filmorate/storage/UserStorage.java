@@ -14,8 +14,4 @@ public interface UserStorage {
     User getUserById(long userId);
 
     void validate(User user);
-
-    void validateId(User user);
-
-    void validateName(User user);
 }

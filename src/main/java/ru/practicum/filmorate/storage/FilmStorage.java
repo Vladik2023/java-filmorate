@@ -11,9 +11,5 @@ public interface FilmStorage {
 
     List<Film> getAllFilms();
 
-    void validate(Film film);
-
-    void validateId(Film film);
-
-    Film getFilmById(int id);
+    Film getFilmById(Long id);
 }

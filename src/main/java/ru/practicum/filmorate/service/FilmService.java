@@ -2,31 +2,49 @@ package ru.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.storage.FilmStorage;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
+import javax.validation.ValidationException;
+
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    private Map<Long, Set<Long>> likesMap;
-    private Map<Long, Integer> likesCountMap;
-    private FilmStorage filmStorage;
-    private Validator validator;
 
-    public Set<ConstraintViolation<Film>> validateFilm(Film film) {
-        return validator.validate(film);
-    }
+    private final FilmStorage filmStorage;
+    private final UserService userService;
 
     public Film addFilm(Film film) {
+        validateFilm(film);
         filmStorage.addFilm(film);
         return film;
     }
 
+    private void validateFilm(Film film) {
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            throw new ValidationException("Некоректная дата релиза");
+        }
+
+    }
+
+    public Film getById(Long id) {
+        Film film = filmStorage.getFilmById(id);
+        if (film == null) {
+            throw new NotFoundException("Фильм не найден");
+        }
+        return film;
+    }
+
     public Film updateFilm(Film film) {
+        validateFilm(film);
+        if (filmStorage.getFilmById(film.getId()) == null) {
+            throw new NotFoundException("Фильм не найден");
+        }
         filmStorage.updateFilm(film);
         return film;
     }
@@ -35,47 +53,30 @@ public class FilmService {
         return filmStorage.getAllFilms();
     }
 
-    public Film getFilmById(int id) {
-        filmStorage.getFilmById(id);
-        return filmStorage.getFilmById(id);
-    }
-
     public void addLike(Long filmId, Long userId) {
-        if (!likesMap.containsKey(filmId)) {
-            likesMap.put(filmId, new HashSet<>());
+        if (filmStorage.getFilmById(filmId) == null) {
+            throw new NotFoundException("Фильм не найден");
         }
-
-        Set<Long> likes = likesMap.get(filmId);
-        if (!likes.contains(userId)) {
-            likes.add(userId);
-            likesCountMap.put(filmId, likes.size());
+        if (userService.getUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден");
         }
+        filmStorage.getFilmById(filmId).getLikesUser().add(userId);
     }
 
     public void removeLike(Long filmId, Long userId) {
-        if (likesMap.containsKey(filmId)) {
-            Set<Long> likes = likesMap.get(filmId);
-            if (likes.contains(userId)) {
-                likes.remove(userId);
-                likesCountMap.put(filmId, likes.size());
-            }
+        if (filmStorage.getFilmById(filmId) == null) {
+            throw new NotFoundException("Фильм не найден");
         }
+        if (userService.getUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден");
+        }
+        filmStorage.getFilmById(filmId).getLikesUser().remove(userId);
     }
 
-    public List<Long> getPopularFilms() {
-        List<Map.Entry<Long, Integer>> sortedLikesCountList = new ArrayList<>(likesCountMap.entrySet());
-        sortedLikesCountList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-
-        List<Long> popularFilms = new ArrayList<>();
-        int count = 0;
-        for (Map.Entry<Long, Integer> entry : sortedLikesCountList) {
-            popularFilms.add(entry.getKey());
-            count++;
-            if (count >= 10) {
-                break;
-            }
-        }
-
-        return popularFilms;
+    public List<Film> getPopularFilms(int count) {
+        return filmStorage.getAllFilms().stream()
+                .sorted((o1, o2) -> o2.getLikesUser().size() - o1.getLikesUser().size())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 }

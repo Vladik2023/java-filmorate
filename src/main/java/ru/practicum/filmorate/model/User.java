@@ -8,6 +8,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,7 +20,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class User {
 
-    private int id;
+    private Long id;
 
     @NotBlank(message = "Электронная почта не может быть пустой")
     @Email(message = "Некорректный формат электронной почты")
@@ -34,5 +36,7 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
 
-    public static int usersId = 1; // сквозной счетчик
+    private Set<Long> friends = new HashSet<>();
+
+
 }
