@@ -1,74 +1,136 @@
 package ru.practicum.filmorate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.filmorate.controller.UserController;
-import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.model.User;
 import ru.practicum.filmorate.service.UserService;
 
-import javax.validation.Validator;
-import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(UserController.class)
-public class UserControllerTest {
+@ExtendWith(MockitoExtension.class)
+class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @Mock
     private UserService userService;
 
-    @MockBean
-    private Validator validator;
+    @InjectMocks
+    private UserController userController;
 
     @Test
-    public void testCreateUser() throws Exception {
-        User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userService.createUser(any(User.class))).thenReturn(user);
-        when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
+    void createUser_ValidUser_ReturnsCreatedUser() {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setLogin("testuser");
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(user.getName()));
+        User createdUser = new User();
+        createdUser.setId(1L);
+        createdUser.setEmail("test@example.com");
+        createdUser.setLogin("testuser");
+
+        when(userService.createUser(user)).thenReturn(createdUser);
+
+        User result = userController.createUser(user);
+
+        assertEquals(createdUser, result);
+        verify(userService, times(1)).createUser(user);
     }
 
     @Test
-    public void testUpdateUser() throws Exception {
-        User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userService.updateUser(any(User.class))).thenReturn(user);
-        when(validator.validate(any(Film.class))).thenReturn(Collections.emptySet());
+    void updateUser_ValidUser_ReturnsUpdatedUser() {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@example.com");
+        user.setLogin("testuser");
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(user)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(user.getName()));
+        User updatedUser = new User();
+        updatedUser.setId(1L);
+        updatedUser.setEmail("updated@example.com");
+        updatedUser.setLogin("testuser");
+
+        when(userService.updateUser(user)).thenReturn(updatedUser);
+        User result = userController.updateUser(user);
+        assertEquals(updatedUser, result);
+        verify(userService, times(1)).updateUser(user);
     }
 
     @Test
-    public void testGetAllUsers() throws Exception {
-        User user = new User(1, "user@email.com", "user", "Use", LocalDate.now());
-        when(userService.getAllUsers()).thenReturn(Collections.singletonList(user));
+    void getAllUsers_ReturnsListOfUsers() {
+        List<User> users = Collections.singletonList(new User());
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/users"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$[0].name").value(user.getName()));
+        when(userService.getAllUsers()).thenReturn(users);
+
+        List<User> result = userController.getAllUsers();
+
+        assertEquals(users, result);
+        verify(userService, times(1)).getAllUsers();
+    }
+
+    @Test
+    void getUserById_ExistingId_ReturnsUser() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+
+        when(userService.getUserById(userId)).thenReturn(user);
+
+        User result = userController.getUserById(userId);
+
+        assertEquals(user, result);
+        verify(userService, times(1)).getUserById(userId);
+    }
+
+    @Test
+    void addFriend_ValidIds_NoContentReturned() {
+        Long userId = 1L;
+        Long friendId = 2L;
+
+        assertDoesNotThrow(() -> userController.addFriend(userId, friendId));
+
+        verify(userService, times(1)).addFriend(userId, friendId);
+    }
+
+    @Test
+    void removeFriend_ValidIds_NoContentReturned() {
+        Long userId = 1L;
+        Long friendId = 2L;
+
+        assertDoesNotThrow(() -> userController.removeFriend(userId, friendId));
+
+        verify(userService, times(1)).removeFriend(userId, friendId);
+    }
+
+    @Test
+    void getFriends_ValidId_ReturnsListOfFriends() {
+        Long userId = 1L;
+        List<User> friends = Collections.singletonList(new User());
+
+        when(userService.getFriends(userId)).thenReturn(friends);
+
+        List<User> result = userController.getFriends(userId);
+
+        assertEquals(friends, result);
+        verify(userService, times(1)).getFriends(userId);
+    }
+
+    @Test
+    void getCommonFriends_ValidIds_ReturnsListOfCommonFriends() {
+        Long userId = 1L;
+        Long otherId = 2L;
+        List<User> commonFriends = Collections.singletonList(new User());
+
+        when(userService.getCommonFriends(userId, otherId)).thenReturn(commonFriends);
+
+        List<User> result = userController.getCommonFriends(userId, otherId);
+
+        assertEquals(commonFriends, result);
+        verify(userService, times(1)).getCommonFriends(userId, otherId);
     }
 }

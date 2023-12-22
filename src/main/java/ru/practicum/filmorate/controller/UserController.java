@@ -2,60 +2,69 @@ package ru.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.filmorate.model.User;
 import ru.practicum.filmorate.service.UserService;
 
-import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
-import javax.validation.ValidationException;
-import javax.validation.Validator;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
 @RequiredArgsConstructor
+@ComponentScan
 public class UserController {
 
     private final UserService userService;
-    private final Validator validator;
 
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        if (!violations.isEmpty()) {
-            String errorMessage = violations.iterator().next().getMessage();
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
+    public User createUser(@Valid @RequestBody User user) {
         User createdUser = userService.createUser(user);
         log.info("User created: {}", createdUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        return createdUser;
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        if (!violations.isEmpty()) {
-            String errorMessage = violations.iterator().next().getMessage();
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
+    public User updateUser(@Valid @RequestBody User user) {
         User updatedUser = userService.updateUser(user);
         log.info("User updated: {}", updatedUser);
-        return ResponseEntity.ok(updatedUser);
+        return updatedUser;
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public List<User> getAllUsers() {
         List<User> users = userService.getAllUsers();
         log.info("Retrieved {} users", users.size());
-        return ResponseEntity.ok(users);
+        return users;
+    }
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return userService.getUserById(id);
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.removeFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable Long id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 }
