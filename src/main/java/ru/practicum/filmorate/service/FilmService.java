@@ -1,53 +1,82 @@
 package ru.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.Film;
-import ru.practicum.filmorate.utils.Validators;
+import ru.practicum.filmorate.storage.FilmStorage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.validation.ValidationException;
+
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-@Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
-    private final Map<Integer, Film> films = new HashMap<>();
+    private final FilmStorage filmStorage;
+    private final UserService userService;
 
     public Film addFilm(Film film) {
-        validate(film);
-        films.put(film.getId(), film);
-        log.debug("Добавлен новый фильм: {}", film);
+        validateFilm(film);
+        filmStorage.addFilm(film);
+        return film;
+    }
+
+    private void validateFilm(Film film) {
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            throw new ValidationException("Некоректная дата релиза");
+        }
+
+    }
+
+    public Film getById(Long id) {
+        Film film = filmStorage.getFilmById(id);
+        if (film == null) {
+            throw new NotFoundException("Фильм не найден");
+        }
         return film;
     }
 
     public Film updateFilm(Film film) {
-        if (!films.containsKey(film.getId())) {
-            Validators.logAndError("Ошибка! Невозможно обновить фильм - его не существует.");
+        validateFilm(film);
+        if (filmStorage.getFilmById(film.getId()) == null) {
+            throw new NotFoundException("Фильм не найден");
         }
-        validate(film);
-        films.put(film.getId(), film);
-        log.debug("Обновлен фильм: {}", film);
+        filmStorage.updateFilm(film);
         return film;
     }
 
     public List<Film> getAllFilms() {
-        return new ArrayList<>(films.values());
+        return filmStorage.getAllFilms();
     }
 
-    private void validate(Film film) {
-        Validators.validateName(film.getName());
-        Validators.validateDescription(film.getDescription());
-        Validators.validateReleaseDate(film.getReleaseDate());
-        Validators.validateDuration(film.getDuration());
-        validateId(film);
-    }
-
-    private void validateId(Film film) {
-        if (film.getId() == 0) {
-            film.setId(Film.filmsId++);
+    public void addLike(Long filmId, Long userId) {
+        if (filmStorage.getFilmById(filmId) == null) {
+            throw new NotFoundException("Фильм не найден");
         }
+        if (userService.getUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден");
+        }
+        filmStorage.getFilmById(filmId).getLikesUser().add(userId);
+    }
+
+    public void removeLike(Long filmId, Long userId) {
+        if (filmStorage.getFilmById(filmId) == null) {
+            throw new NotFoundException("Фильм не найден");
+        }
+        if (userService.getUserById(userId) == null) {
+            throw new NotFoundException("Пользователь не найден");
+        }
+        filmStorage.getFilmById(filmId).getLikesUser().remove(userId);
+    }
+
+    public List<Film> getPopularFilms(int count) {
+        return filmStorage.getAllFilms().stream()
+                .sorted((o1, o2) -> o2.getLikesUser().size() - o1.getLikesUser().size())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 }
