@@ -9,6 +9,7 @@ import ru.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
@@ -29,7 +30,7 @@ public class FilmController {
     }
 
     @GetMapping
-    public List<Film> getAllFilms() {
+    public Map<Long, Film> getAllFilms() {
         return filmService.getAllFilms();
     }
 
@@ -39,7 +40,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+    public Map<Long, Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
         return filmService.getPopularFilms(count);
     }
 

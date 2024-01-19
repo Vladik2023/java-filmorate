@@ -1,6 +1,7 @@
 package ru.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.Film;
@@ -49,7 +50,7 @@ public class FilmService {
         return film;
     }
 
-    public List<Film> getAllFilms() {
+    public Map<Long, Film> getAllFilms() {
         return filmStorage.getAllFilms();
     }
 
@@ -73,10 +74,10 @@ public class FilmService {
         filmStorage.getFilmById(filmId).getLikesUser().remove(userId);
     }
 
-    public List<Film> getPopularFilms(int count) {
-        return filmStorage.getAllFilms().stream()
-                .sorted((o1, o2) -> o2.getLikesUser().size() - o1.getLikesUser().size())
+    public Map<Long, Film> getPopularFilms(int count) {
+        return filmStorage.getAllFilms().entrySet().stream()
+                .sorted((o1, o2) -> o2.getValue().getLikesUser().size() - o1.getValue().getLikesUser().size())
                 .limit(count)
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 }

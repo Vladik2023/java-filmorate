@@ -16,7 +16,6 @@ import java.util.Set;
 @EqualsAndHashCode
 @ToString
 @Builder(toBuilder = true)
-@NoArgsConstructor
 @AllArgsConstructor
 public class Film {
 
@@ -36,4 +35,7 @@ public class Film {
     private int duration;
 
     private Set<Long> likesUser = new HashSet<>();
+
+    private final Mpa mpa;
+    private final Set<Genre> genres = new HashSet<>();
 }

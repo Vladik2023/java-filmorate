@@ -10,12 +10,12 @@ import ru.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
 @RequiredArgsConstructor
-@ComponentScan
 public class UserController {
 
     private final UserService userService;
@@ -36,9 +36,8 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        log.info("Retrieved {} users", users.size());
-        return users;
+        log.info("Retrieved all_users");
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")

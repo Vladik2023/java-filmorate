@@ -1,0 +1,242 @@
+package ru.practicum.filmorate.storage.dao;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
+import ru.practicum.filmorate.exception.NotFoundException;
+import ru.practicum.filmorate.model.Film;
+import ru.practicum.filmorate.model.Genre;
+import ru.practicum.filmorate.model.Mpa;
+import ru.practicum.filmorate.model.User;
+import ru.practicum.filmorate.storage.FilmStorage;
+import ru.practicum.filmorate.storage.UserStorage;
+
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+
+@Slf4j
+@Repository
+@RequiredArgsConstructor
+public class FilmDbStorage implements FilmStorage {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final UserStorage userStorage;
+
+    @Override
+    public Map<Long, Film> getAllFilms () {
+        Map<Long, Film> films = new HashMap<>();
+        String sqlQuery = "SELECT F.*, R.NAME FROM FILMS AS F JOIN RATING AS R ON F.RATING_ID = R.ID ";
+        List<Film> filmsFromDb = jdbcTemplate.query(sqlQuery, this::mapRowToFilm);
+        for (Film film : filmsFromDb) {
+            films.put(film.getId(), film);
+        }
+        return films;
+    }
+
+
+
+    @Override
+    public Film addFilm (Film film) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        String sqlQuery = "INSERT INTO FILMS (NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_ID) " +
+                "VALUES (?, ?, ?, ?, ?);";
+        String queryForFilmGenre = "INSERT INTO FILM_GENRE (FILM_ID, GENRE_ID) VALUES (?, ?);";
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps =
+                    connection.prepareStatement(sqlQuery, new String[]{"film_id"});
+            ps.setString(1, film.getName());
+            ps.setString(2, film.getDescription());
+            ps.setDate(3, Date.valueOf(film.getReleaseDate()));
+            ps.setLong(4, film.getDuration());
+            ps.setInt(5, film.getMpa().getId());
+            return ps;
+        }, keyHolder);
+        film.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+
+        if (!film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                jdbcTemplate.update(queryForFilmGenre, film.getId(), genre.getId());
+            }
+        }
+        return getFilmById(film.getId());
+    }
+
+    @Override
+    public Film updateFilm (Film film) {
+        String sqlQuery = "UPDATE FILMS SET NAME = ?, DESCRIPTION = ?, RELEASE_DATE = ?, RATING_ID = ?, DURATION = ?" +
+                " WHERE ID = ?;";
+        String queryToDeleteFilmGenres = "DELETE FROM FILM_GENRE WHERE FILM_ID = ?;";
+        String queryForUpdateGenre = "INSERT INTO FILM_GENRE (FILM_ID, GENRE_ID) VALUES (?, ?);";
+        jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(),
+                film.getMpa().getId(), film.getDuration(), film.getId());
+        jdbcTemplate.update(queryToDeleteFilmGenres, film.getId());
+        if (!film.getGenres().isEmpty()) {
+            for (Genre genre : film.getGenres()) {
+                jdbcTemplate.update(queryForUpdateGenre, film.getId(), genre.getId());
+            }
+        }
+        return getFilmById(film.getId());
+    }
+
+    @Override
+    public Film getFilmById (Long id) {
+        String sqlQuery = "SELECT F.*, R.NAME FROM FILMS AS F JOIN RATING AS R ON F.RATING_ID = R.ID " +
+                " WHERE ID = ?;";
+        SqlRowSet filmRows = jdbcTemplate.queryForRowSet(sqlQuery, id);
+        if (filmRows.next()) {
+            Film film = Film.builder()
+                    .id(filmRows.getLong("ID"))
+                    .name(filmRows.getString("NAME"))
+                    .description(filmRows.getString("DESCRIPTION"))
+                    .releaseDate(Objects.requireNonNull(filmRows.getDate("RELEASE_DATE")).toLocalDate())
+                    .duration(filmRows.getInt("DURATION"))
+                    .mpa(new Mpa(filmRows.getInt("ID"), filmRows.getString("NAME")))
+                    .build();
+            List<Genre> genresOfFilm = getGenresOfFilm(id);
+            List<Integer> likes = getLikesOfFilm(film.getId());
+            for (Genre genre : genresOfFilm) {
+                film.getGenres().add(genre);
+            }
+            for (Integer like : likes) {
+                film.getLikesUser().add(Long.valueOf(like));
+            }
+            log.info("Найден фильм с id {}", id);
+            return film;
+        }
+        log.warn("Фильм с id {} не найден", id);
+        throw new NotFoundException("Что то не работает");
+    }
+
+    private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
+        log.info("Film build start>>>>>");
+        Film film = Film.builder()
+                .id(rs.getLong("ID"))
+                .name(rs.getString("NAME"))
+                .description(rs.getString("DESCRIPTION"))
+                .releaseDate(rs.getDate("RELEASE_DATE").toLocalDate())
+                .duration(rs.getInt("DURATION"))
+                .mpa(new Mpa(rs.getInt("ID"), rs.getString("NAME")))
+                .build();
+        log.info("Film = {}", film);
+        List<Genre> genresOfFilm = getGenresOfFilm(film.getId());
+        List<Integer> likes = getLikesOfFilm(film.getId());
+        for (Genre genre : genresOfFilm) {
+            film.getGenres().add(genre);
+        }
+        for (Integer like : likes) {
+            film.getLikesUser().add(Long.valueOf(like));
+        }
+        return film;
+    }
+
+    private Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
+        return new Genre(rs.getInt("ID"), rs.getString("NAME"));
+    }
+
+    private Integer mapRowToLike(ResultSet rs, int rowNum) throws SQLException {
+        return rs.getInt("ID");
+    }
+
+    private List<Genre> getGenresOfFilm(long filmId) {
+        String queryForFilmGenres = "SELECT FG.FILM_ID, FG.GENRE_ID, G.NAME FROM FILM_GENRE FG" +
+                " JOIN GENRE G ON G.ID = FG.GENRE_ID WHERE ID = ?;";
+        return jdbcTemplate.query(queryForFilmGenres, this::mapRowToGenre, filmId);
+    }
+
+    private List<Integer> getLikesOfFilm(long filmId) {
+        String queryForFilmLikes = "SELECT USER_ID FROM FILM_LIKE WHERE FILM_ID = ?;";
+        return jdbcTemplate.query(queryForFilmLikes, this::mapRowToLike, filmId);
+    }
+
+    @Override
+    public void addLike(long filmId, long userId) {
+        Film film = getFilmById(filmId);
+        User user = userStorage.getUserById(userId);
+        try {
+            String sqlQuery = "INSERT INTO FILM_LIKE (FILM_ID, USER_ID) VALUES (?, ?);";
+            jdbcTemplate.update(sqlQuery, filmId, userId);
+        } catch (Exception e) {
+            log.warn("Лайк фильму с id {} от пользователя с id {} уже существует", filmId, userId);
+        }
+    }
+
+    @Override
+    public void deleteLike(long filmId, long userId) {
+        Film film = getFilmById(filmId);
+        User user = userStorage.getUserById(userId);
+        String sqlQuery = "DELETE FROM FILM_LIKE WHERE FILM_ID = ? AND USER_ID = ?;";
+        jdbcTemplate.update(sqlQuery, filmId, userId);
+    }
+
+
+
+    public void deleteFilm(long filmId) {
+        Film film = getFilmById(filmId);
+        String sqlQuery = "DELETE FROM FILMS WHERE ID = ?;";
+        jdbcTemplate.update(sqlQuery, filmId);
+    }
+
+    private List<Film> getFilmsByTitle(String query) {
+        String sql = "SELECT f.*, r.NAME FROM FILMS f INNER JOIN RATING r ON r.ID = f.RATING_ID " +
+                "LEFT JOIN FILM_LIKE fl ON fl.FILM_ID = f.ID GROUP BY f.FILM_ID " +
+                "HAVING LOWER(f.NAME) LIKE ? ORDER BY COUNT(fl.USER_ID) DESC";
+        return jdbcTemplate.query(sql, this::mapRowToFilm, query);
+    }
+
+    @Override
+    public List<Film> getRecommendations(long userId) {
+        /*
+        Описание запроса:
+        Подзапрос (1) - Найти id пользователей, с максимальным количеством пересечения по лайкам:
+        Объединям таблицу FILM_LIKE с самой собой, делаем right join
+        и оставляем справа только id данного пользователя, слева id всех пользователей, кроме нашего и null.
+        Получается такая таблица: FL1.user_id | film_id | FL2.user_id
+        Таким образом в FL1.user_id получаются id всех пользователей, которые лайкали такие же фильмы, что и данный.
+        Группируем пользователей по id, сортируем по частоте этих id
+        (то есть в начале списка будут пользователи, у которых наиболее совпадают лайки с данным).
+        Выбираем первых трех из этих пользователей
+
+        Подзапрос (2):
+        Находим id фильмов, которые лайкнули найденные пользователи
+
+        Подзапрос (3):
+        Находим id фильмов, которые лайкнул данный пользователь
+
+        Запрос (4):
+        Находим фильмы, c id, которые есть в списке из (2), но нет в списке из (3).
+        (То есть те, которые лайкали найденные пользователи, на не лайкал данный)
+         */
+        String sql =
+                "SELECT * FROM FILMS F " + //(4)
+                        "JOIN RATING R ON F.RATING_ID = R.ID " +
+                        "WHERE F.ID IN (" +
+                        "SELECT FILM_ID FROM FILM_LIKE " + //(2)
+                        "WHERE USER_ID IN (" +
+                        "SELECT FL1.USER_ID FROM FILM_LIKE FL1 " + //(1)
+                        "RIGHT JOIN FILM_LIKE FL2 ON FL2.FILM_ID = FL1.FILM_ID " +
+                        "GROUP BY FL1.USER_ID, FL2.USER_ID " +
+                        "HAVING FL1.USER_ID IS NOT NULL AND " +
+                        "FL1.USER_ID != ? AND " +
+                        "FL2.USER_ID = ? " +
+                        "ORDER BY COUNT(FL1.USER_ID) DESC " +
+                        "LIMIT 3 " +
+                        ") " +
+                        "AND FILM_ID NOT IN (" +
+                        "SELECT FILM_ID FROM FILM_LIKE " + //(3)
+                        "WHERE USER_ID = ?" +
+                        ")" +
+                        ")";
+
+        return jdbcTemplate.query(sql, this::mapRowToFilm, userId, userId, userId);
+    }
+}

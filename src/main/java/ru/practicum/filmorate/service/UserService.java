@@ -2,12 +2,14 @@ package ru.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.User;
 import ru.practicum.filmorate.storage.UserStorage;
 
 import javax.validation.ValidationException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService {
     private Map<Long, Set<Long>> friendsMap;
-    @Autowired
+
     private UserStorage userStorage;
 
     public User createUser(User user) {
@@ -29,7 +31,7 @@ public class UserService {
 
     public User updateUser(User user) {
         if (userStorage.getUserById(user.getId()) == null) {
-            throw new ValidationException("Ошибка! Невозможно обновить пользователя - его не существует.");
+            throw new NotFoundException("Ошибка! Невозможно обновить пользователя - его не существует.");
         }
         if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());

@@ -16,11 +16,12 @@ import java.util.Set;
 @EqualsAndHashCode
 @ToString
 @Builder(toBuilder = true)
-@NoArgsConstructor
 @AllArgsConstructor
 public class User {
 
     private Long id;
+
+    private String name;
 
     @NotBlank(message = "Электронная почта не может быть пустой")
     @Email(message = "Некорректный формат электронной почты")
@@ -30,7 +31,7 @@ public class User {
     @Pattern(regexp = "\\S+", message = "Логин не может содержать пробелы")
     private String login;
 
-    private String name;
+
 
     @Past(message = "Дата рождения не может быть в будущем")
     @JsonFormat(pattern = "yyyy-MM-dd")
