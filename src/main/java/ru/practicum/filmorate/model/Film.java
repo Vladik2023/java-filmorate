@@ -2,6 +2,7 @@ package ru.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.PastOrPresent;
@@ -15,8 +16,8 @@ import java.util.Set;
 @Setter
 @EqualsAndHashCode
 @ToString
-@Builder(toBuilder = true)
-@AllArgsConstructor
+@SuperBuilder
+@NoArgsConstructor
 public class Film {
 
     private Long id;
@@ -36,6 +37,6 @@ public class Film {
 
     private Set<Long> likesUser = new HashSet<>();
 
-    private final Mpa mpa;
-    private final Set<Genre> genres = new HashSet<>();
+    private Mpa mpa;
+    private Set<Genre> genres = new HashSet<>();
 }

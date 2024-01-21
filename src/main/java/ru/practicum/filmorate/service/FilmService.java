@@ -1,16 +1,16 @@
 package ru.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.Film;
 import ru.practicum.filmorate.storage.FilmStorage;
 
 import javax.validation.ValidationException;
-
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,11 +46,10 @@ public class FilmService {
         if (filmStorage.getFilmById(film.getId()) == null) {
             throw new NotFoundException("Фильм не найден");
         }
-        filmStorage.updateFilm(film);
-        return film;
+        return filmStorage.updateFilm(film);
     }
 
-    public Map<Long, Film> getAllFilms() {
+    public List<Film> getAllFilms() {
         return filmStorage.getAllFilms();
     }
 
@@ -61,7 +60,7 @@ public class FilmService {
         if (userService.getUserById(userId) == null) {
             throw new NotFoundException("Пользователь не найден");
         }
-        filmStorage.getFilmById(filmId).getLikesUser().add(userId);
+        filmStorage.addLike(filmId, userId);
     }
 
     public void removeLike(Long filmId, Long userId) {
@@ -71,13 +70,18 @@ public class FilmService {
         if (userService.getUserById(userId) == null) {
             throw new NotFoundException("Пользователь не найден");
         }
-        filmStorage.getFilmById(filmId).getLikesUser().remove(userId);
+        filmStorage.deleteLike(filmId, userId);
     }
 
-    public Map<Long, Film> getPopularFilms(int count) {
-        return filmStorage.getAllFilms().entrySet().stream()
-                .sorted((o1, o2) -> o2.getValue().getLikesUser().size() - o1.getValue().getLikesUser().size())
+    public List<Film> getPopularFilms(int count) {
+        List<Film> films = filmStorage.getAllFilms();
+
+        Map<Long, Set<Long>> filmLikesMap = filmStorage.getLikesOfFilm(films);
+
+        return films.stream()
+                .peek(film -> film.setLikesUser(filmLikesMap.get(film.getId())))
+                .sorted((o1, o2) -> o2.getLikesUser().size() - o1.getLikesUser().size())
                 .limit(count)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+                .collect(Collectors.toList());
     }
 }

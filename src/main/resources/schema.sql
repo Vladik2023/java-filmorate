@@ -1,10 +1,10 @@
-DROP TABLE films CASCADE;
-DROP TABLE users CASCADE;
-DROP TABLE rating CASCADE;
-DROP TABLE genre CASCADE;
-DROP TABLE film_likes CASCADE;
-DROP TABLE user_friends CASCADE;
-DROP TABLE film_genre CASCADE;
+DROP TABLE if exists films CASCADE;
+DROP TABLE if exists users CASCADE;
+DROP TABLE if exists rating CASCADE;
+DROP TABLE if exists genre CASCADE;
+DROP TABLE if exists film_likes CASCADE;
+DROP TABLE if exists user_friends CASCADE;
+DROP TABLE if exists film_genre CASCADE;
 
 CREATE TABLE if not exists rating (
     id integer generated  by default as identity PRIMARY KEY,

@@ -3,10 +3,9 @@ package ru.practicum.filmorate.storage.dao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.stereotype.Component;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.practicum.filmorate.exception.NotFoundException;
 import ru.practicum.filmorate.model.User;
@@ -16,10 +15,8 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Repository
@@ -30,7 +27,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getAllUsers() {
-        List<User> users = new ArrayList<>();
         String sqlQuery = "SELECT * FROM \"USERS\"";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser);
     }
@@ -102,8 +98,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriend(long userId, long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
         String sqlQuery = "INSERT INTO USER_FRIENDS (USER_ID, FRIENDS_ID) VALUES (?, ?);";
         jdbcTemplate.update(sqlQuery, userId, friendId);
     }
@@ -123,7 +117,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getAllFriends(long userId) {
-        User user = getUserById(userId);
+        getUserById(userId);
         String sqlQuery = "SELECT * FROM \"USERS\" AS U WHERE U.ID IN " +
                 "(SELECT F.FRIENDS_ID FROM USER_FRIENDS AS F WHERE F.USER_ID = ?);";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser, userId);
@@ -131,7 +125,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void deleteUser(long userId) {
-        User user = getUserById(userId);
+        getUserById(userId);
         String sqlQuery = "DELETE FROM \"USERS\" WHERE ID = ?;";
         jdbcTemplate.update(sqlQuery, userId);
     }

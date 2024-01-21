@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.practicum.filmorate.model.Mpa;
-import org.springframework.stereotype.Component;
 import ru.practicum.filmorate.storage.MpaStorage;
 
 import java.sql.ResultSet;

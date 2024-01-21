@@ -2,6 +2,7 @@ package ru.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -15,8 +16,8 @@ import java.util.Set;
 @Setter
 @EqualsAndHashCode
 @ToString
-@Builder(toBuilder = true)
-@AllArgsConstructor
+@SuperBuilder
+@NoArgsConstructor
 public class User {
 
     private Long id;
@@ -31,13 +32,9 @@ public class User {
     @Pattern(regexp = "\\S+", message = "Логин не может содержать пробелы")
     private String login;
 
-
-
     @Past(message = "Дата рождения не может быть в будущем")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
 
     private Set<Long> friends = new HashSet<>();
-
-
 }
