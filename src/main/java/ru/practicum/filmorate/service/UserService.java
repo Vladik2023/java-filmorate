@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-//    private Map<Long, Set<Long>> friendsMap;
 
     private final UserStorage userStorage;
 
