@@ -37,7 +37,6 @@ public class FilmControllerTest {
 
     @Test
     void addFilm_ValidFilm_ReturnsCreatedFilm() {
-        // Arrange
         Film film = new Film();
         film.setName("Test Film");
         film.setDescription("This is a test film");
@@ -50,23 +49,18 @@ public class FilmControllerTest {
         createdFilm.setDescription("This is a test film");
         createdFilm.setReleaseDate(LocalDate.now());
         createdFilm.setDuration(120);
-
-        // Initialize the filmController variable
         FilmController filmController = new FilmController(filmService);
 
         when(filmService.addFilm(film)).thenReturn(createdFilm);
 
-        // Act
         Film result = filmController.addFilm(film);
 
-        // Assert
         assertEquals(createdFilm, result);
         verify(filmService, times(1)).addFilm(film);
     }
 
     @Test
     void updateFilm_ValidFilm_ReturnsUpdatedFilm() {
-        // Arrange
         Film film = new Film();
         film.setId(1L);
         film.setName("Updated Film");
@@ -81,18 +75,14 @@ public class FilmControllerTest {
         updatedFilm.setReleaseDate(LocalDate.now());
         updatedFilm.setDuration(150);
 
-        // Declare the filmController variable
         FilmController filmController;
 
-        // Initialize the filmController variable
         filmController = new FilmController(filmService);
 
         when(filmService.updateFilm(film)).thenReturn(updatedFilm);
 
-        // Act
         Film result = filmController.updateFilm(film);
 
-        // Assert
         assertEquals(updatedFilm, result);
         verify(filmService, times(1)).updateFilm(film);
     }

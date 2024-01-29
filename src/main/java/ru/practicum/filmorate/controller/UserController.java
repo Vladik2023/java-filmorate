@@ -2,7 +2,6 @@ package ru.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.filmorate.model.User;
@@ -15,7 +14,6 @@ import java.util.List;
 @RequestMapping("/users")
 @Slf4j
 @RequiredArgsConstructor
-@ComponentScan
 public class UserController {
 
     private final UserService userService;
@@ -36,9 +34,8 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        log.info("Retrieved {} users", users.size());
-        return users;
+        log.info("Retrieved all_users");
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
